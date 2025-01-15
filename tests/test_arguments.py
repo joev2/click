@@ -1,3 +1,4 @@
+import csv
 import sys
 from unittest import mock
 
@@ -122,6 +123,21 @@ def test_file_args(runner):
         result = runner.invoke(inout, ["hello.txt", "-"])
         assert result.output == "Hey!"
         assert result.exit_code == 0
+
+
+def test_file_csv(runner):
+    @click.command()
+    @click.argument("output", type=click.File("wt"))
+    def csvout(output):
+        c = csv.writer(output)
+        c.writerows([["a", "b", "c"], ["d", "e", "f"]])
+
+    with runner.isolated_filesystem():
+        result = runner.invoke(csvout, ["hello.csv"])
+        assert result.output == ""
+        assert result.exit_code == 0
+        with open("hello.csv", "rb") as f:
+            assert f.read() == b"a,b,c\r\nd,e,f\r\n"
 
 
 def test_path_allow_dash(runner):
